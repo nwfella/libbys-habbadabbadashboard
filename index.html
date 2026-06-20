@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Activity Attendance Tracker</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --text-color: #333;
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --border: #ddd;
+            --success: #27ae60;
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid var(--primary);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .controls select, .controls button {
+            padding: 10px 15px;
+            font-size: 16px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+            margin-left: 10px;
+        }
+        .controls button {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .controls button:hover {
+            background-color: #2980b9;
+        }
+        .controls button.export-btn {
+            background-color: var(--success);
+        }
+        .controls button.export-btn:hover {
+            background-color: #219a52;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 10px;
+        }
+        th, td {
+            border: 1px solid var(--border);
+            padding: 12px;
+            text-align: center;
+        }
+        th {
+            background-color: var(--primary);
+            color: white;
+        }
+        td.patient-name {
+            text-align: left;
+            font-weight: bold;
+            background-color: #f9f9f9;
+        }
+        select.time-select {
+            width: 100%;
+            padding: 5px;
+            border-radius: 4px;
+            border: 1px solid var(--border);
+        }
+        .total-cell {
+            font-weight: bold;
+            background-color: #e8f4f8;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <header>
+        <h2>Activity Attendance Tracker</h2>
+        <div class="controls">
+            <select id="unitSelect" onchange="loadUnitData()">
+                <option value="unit1">Unit 1 (North)</option>
+                <option value="unit2">Unit 2 (South)</option>
+                <option value="unit3">Unit 3 (East)</option>
+            </select>
+            <button class="export-btn" onclick="exportToCSV()">Export to CSV</button>
+        </div>
+    </header>
+    <table id="attendanceTable">
+        <thead>
+            <tr>
+                <th>Patient Name</th>
+                <th>Mon (EVE)</th>
+                <th>Tue (EVE)</th>
+                <th>Wed (EVE)</th>
+                <th>Thu (EVE)</th>
+                <th>Fri (EVE)</th>
+                <th>Saturday</th>
+                <th>Sunday</th>
+                <th>Weekly Tot</th>
+            </tr>
+        </thead>
+        <tbody id="tableBody">
+            </tbody>
+    </table>
+</div>
+<script>
+    // Dummy Database - Can be easily expanded or modified
+    const database = {
+        unit1: ["BOB", "ALSOBOB", "BOBLOBLAW", "HANK", "HANKY", "HANKYDOODLE"],
+        unit2: ["ALICE", "SALLY", "JIM", "DWIGHT", "PAM", "MICHAEL"],
+        unit3: ["JANE", "JOHN", "DOE", "SMITH", "WESSON", "CLARK"]
+    };
+    // Store state to keep data when switching units
+    let state = {};
+    const timeOptionsWeekdays = [0, 45, 90];
+    const timeOptionsWeekend = [0, 45, 90, 120, 240, 330];
+    function initializeState() {
+        for (const unit in database) {
+            state[unit] = {};
+            database[unit].forEach(patient => {
+                state[unit][patient] = { mon:0, tue:0, wed:0, thu:0, fri:0, sat:0, sun:0 };
+            });
+        }
+    }
+    function createDropdown(day, currentValue, isWeekend) {
+        let options = isWeekend ? timeOptionsWeekend : timeOptionsWeekdays;
+        let html = `<select class="time-select" onchange="updateTotal(this)">`;
+        options.forEach(opt => {
+            let selected = (opt == currentValue) ? "selected" : "";
+            let text = opt === 0 ? "-" : opt;
+            html += `<option value="${opt}" ${selected}>${text}</option>`;
+        });
+        html += `</select>`;
+        return html;
+    }
+    function loadUnitData() {
+        const unit = document.getElementById("unitSelect").value;
+        const tbody = document.getElementById("tableBody");
+        tbody.innerHTML = "";
+        database[unit].forEach(patient => {
+            const rowData = state[unit][patient];
+            let row = document.createElement("tr");
+            row.setAttribute("data-patient", patient);
+            row.innerHTML = `
+                <td class="patient-name">${patient}</td>
+                <td>${createDropdown('mon', rowData.mon, false)}</td>
+                <td>${createDropdown('tue', rowData.tue, false)}</td>
+                <td>${createDropdown('wed', rowData.wed, false)}</td>
+                <td>${createDropdown('thu', rowData.thu, false)}</td>
+                <td>${createDropdown('fri', rowData.fri, false)}</td>
+                <td>${createDropdown('sat', rowData.sat, true)}</td>
+                <td>${createDropdown('sun', rowData.sun, true)}</td>
+                <td class="total-cell">0</td>
+            `;
+            tbody.appendChild(row);
+            calculateRowTotal(row); // Initial calculation
+        });
+    }
+    function updateTotal(selectElement) {
+        const row = selectElement.closest("tr");
+        const patient = row.getAttribute("data-patient");
+        const unit = document.getElementById("unitSelect").value;
+        // Update state array
+        const selects = row.querySelectorAll("select");
+        state[unit][patient].mon = parseInt(selects[0].value);
+        state[unit][patient].tue = parseInt(selects[1].value);
+        state[unit][patient].wed = parseInt(selects[2].value);
+        state[unit][patient].thu = parseInt(selects[3].value);
+        state[unit][patient].fri = parseInt(selects[4].value);
+        state[unit][patient].sat = parseInt(selects[5].value);
+        state[unit][patient].sun = parseInt(selects[6].value);
+        calculateRowTotal(row);
+    }
+    function calculateRowTotal(row) {
+        let total = 0;
+        const selects = row.querySelectorAll("select");
+        selects.forEach(select => {
+            total += parseInt(select.value) || 0;
+        });
+        row.querySelector(".total-cell").innerText = total;
+    }
+    function exportToCSV() {
+        const unit = document.getElementById("unitSelect").options[document.getElementById("unitSelect").selectedIndex].text;
+        let csvContent = "data:text/csv;charset=utf-8,";
+        // Header
+        csvContent += `Unit: ${unit}\n`;
+        csvContent += "Patient Name,Mon (EVE),Tue (EVE),Wed (EVE),Thu (EVE),Fri (EVE),Saturday,Sunday,Weekly Tot\n";
+        // Body
+        const rows = document.querySelectorAll("#attendanceTable tbody tr");
+        rows.forEach(row => {
+            let rowData = [];
+            rowData.push(row.querySelector(".patient-name").innerText);
+            const selects = row.querySelectorAll("select");
+            selects.forEach(select => rowData.push(select.value));
+            rowData.push(row.querySelector(".total-cell").innerText);
+            csvContent += rowData.join(",") + "\n";
+        });
+        // Download action
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement("a");
+        link.setAttribute("href", encodedUri);
+        link.setAttribute("download", `Attendance_Report_${unit.replace(/\s+/g, '_')}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    }
+    // Run on boot
+    initializeState();
+    loadUnitData();
+</script>
+</body>
+</html>
