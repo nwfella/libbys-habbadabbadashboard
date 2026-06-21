@@ -88,6 +88,87 @@
             font-weight: bold;
             background-color: #e8f4f8;
         }
+        /* Modal overlay */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-overlay.active {
+            display: flex;
+        }
+        .modal-box {
+            background: white;
+            border-radius: 8px;
+            padding: 25px;
+            max-width: 650px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            box-shadow: 0 8px 20px rgba(0,0,0,0.3);
+        }
+        .modal-box h3 {
+            margin-top: 0;
+            color: var(--primary);
+        }
+        .modal-unit-group {
+            margin-bottom: 18px;
+        }
+        .modal-unit-group label {
+            font-weight: bold;
+            display: block;
+            margin-bottom: 4px;
+            color: var(--primary);
+        }
+        .modal-unit-group textarea {
+            width: 100%;
+            height: 100px;
+            padding: 8px;
+            border: 1px solid var(--border);
+            border-radius: 4px;
+            font-family: inherit;
+            font-size: 14px;
+            resize: vertical;
+            box-sizing: border-box;
+        }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        .modal-actions button {
+            padding: 10px 20px;
+            font-size: 15px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: bold;
+        }
+        .modal-actions .save-btn {
+            background-color: var(--success);
+            color: white;
+        }
+        .modal-actions .save-btn:hover {
+            background-color: #219a52;
+        }
+        .modal-actions .cancel-btn {
+            background-color: #95a5a6;
+            color: white;
+        }
+        .modal-actions .cancel-btn:hover {
+            background-color: #7f8c8d;
+        }
+        .controls button.edit-btn {
+            background-color: #e67e22;
+        }
+        .controls button.edit-btn:hover {
+            background-color: #d35400;
+        }
     </style>
 </head>
 <body>
@@ -101,6 +182,7 @@
                 <option value="unit3">Unit 3 (East)</option>
             </select>
             <button class="export-btn" onclick="exportToCSV()">Export to CSV</button>
+            <button class="edit-btn" onclick="openEditPatients()">Edit Patients</button>
         </div>
     </header>
     <table id="attendanceTable">
@@ -121,6 +203,31 @@
             </tbody>
     </table>
 </div>
+
+<!-- Edit Patients Modal -->
+<div class="modal-overlay" id="editModal">
+    <div class="modal-box">
+        <h3>Edit Patient Lists</h3>
+        <p style="color:#666;margin-bottom:15px;">One name per line. Changes preserve existing attendance data for patients whose names stay the same.</p>
+        <div class="modal-unit-group">
+            <label>Unit 1 (North)</label>
+            <textarea id="edit-unit1"></textarea>
+        </div>
+        <div class="modal-unit-group">
+            <label>Unit 2 (South)</label>
+            <textarea id="edit-unit2"></textarea>
+        </div>
+        <div class="modal-unit-group">
+            <label>Unit 3 (East)</label>
+            <textarea id="edit-unit3"></textarea>
+        </div>
+        <div class="modal-actions">
+            <button class="cancel-btn" onclick="closeEditPatients()">Cancel</button>
+            <button class="save-btn" onclick="saveEditPatients()">Save Patients</button>
+        </div>
+    </div>
+</div>
+
 <script>
     // Dummy Database - Can be easily expanded or modified
     const database = {
@@ -222,6 +329,53 @@
         link.click();
         document.body.removeChild(link);
     }
+    // Patient list editor
+    function openEditPatients() {
+        document.getElementById('edit-unit1').value = database.unit1.join('\n');
+        document.getElementById('edit-unit2').value = database.unit2.join('\n');
+        document.getElementById('edit-unit3').value = database.unit3.join('\n');
+        document.getElementById('editModal').classList.add('active');
+    }
+    function closeEditPatients() {
+        document.getElementById('editModal').classList.remove('active');
+    }
+    function saveEditPatients() {
+        const units = ['unit1', 'unit2', 'unit3'];
+        const textareaIds = ['edit-unit1', 'edit-unit2', 'edit-unit3'];
+        const unitNames = ['Unit 1 (North)', 'Unit 2 (South)', 'Unit 3 (East)'];
+        // Parse each unit's textarea
+        let newDatabase = {};
+        textareaIds.forEach((id, i) => {
+            const lines = document.getElementById(id).value
+                .split('\n')
+                .map(s => s.trim().toUpperCase())
+                .filter(s => s.length > 0);
+            if (lines.length === 0) {
+                alert(`${unitNames[i]} must have at least one patient.`);
+                return;
+            }
+            newDatabase[units[i]] = lines;
+        });
+        // Check all units parsed OK before saving
+        for (const u of units) {
+            if (!newDatabase[u] || newDatabase[u].length === 0) return;
+        }
+        // Update database and preserve existing state by patient name
+        for (const u of units) {
+            const oldState = state[u] || {};
+            database[u] = newDatabase[u];
+            state[u] = {};
+            database[u].forEach(patient => {
+                state[u][patient] = oldState[patient] || { mon:0, tue:0, wed:0, thu:0, fri:0, sat:0, sun:0 };
+            });
+        }
+        closeEditPatients();
+        loadUnitData();
+    }
+    // Close modal on overlay click
+    document.getElementById('editModal').addEventListener('click', function(e) {
+        if (e.target === this) closeEditPatients();
+    });
     // Run on boot
     initializeState();
     loadUnitData();
