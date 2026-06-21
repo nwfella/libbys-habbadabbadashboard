@@ -23,3 +23,7 @@
 
 - Pure HTML / CSS / JavaScript — no dependencies
 - GitHub Pages hosted
+
+## License
+
+All Rights Reserved. See [LICENSE](LICENSE) for full terms.
