@@ -10,6 +10,7 @@
 - **Automatic weekly totals** — See each patient's total at a glance
 - **CSV export** — Download attendance data as a CSV report
 - **State persistence** — Data stays intact when switching between units
+- **Inline patient editor** — Add, remove, or rename patients per unit. Existing attendance data is preserved for patients whose names stay the same
 
 ## Usage
 
