@@ -11,6 +11,7 @@
 - **CSV export** — Download attendance data as a CSV report
 - **State persistence** — Data stays intact when switching between units
 - **Inline patient editor** — Add, remove, or rename patients per unit. Existing attendance data is preserved for patients whose names stay the same
+- **Theme switcher** — Choose from **Default**, **Dark**, or **Oregon Green** themes. Your preference is saved in the browser
 
 ## Usage
 

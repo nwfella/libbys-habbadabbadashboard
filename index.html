@@ -5,13 +5,72 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Activity Attendance Tracker</title>
     <style>
-        :root {
+        /* ===== Theme variables ===== */
+        body, body.theme-default {
             --bg-color: #f4f7f6;
             --text-color: #333;
             --primary: #2c3e50;
             --secondary: #3498db;
             --border: #ddd;
             --success: #27ae60;
+            --container-bg: white;
+            --patient-name-bg: #f9f9f9;
+            --total-cell-bg: #e8f4f8;
+            --modal-bg: white;
+            --input-bg: white;
+            --th-text: white;
+            --btn-text: white;
+            --row-hover: #f0f4f8;
+            --secondary-hover: #2980b9;
+            --success-hover: #219a52;
+            --edit-btn-bg: #e67e22;
+            --edit-btn-hover: #d35400;
+            --cancel-btn-bg: #95a5a6;
+            --cancel-btn-hover: #7f8c8d;
+        }
+        body.theme-dark {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --primary: #1e3a5f;
+            --secondary: #4a9eff;
+            --border: #333;
+            --success: #2ecc71;
+            --container-bg: #1e1e2e;
+            --patient-name-bg: #2a2a3e;
+            --total-cell-bg: #1a2a3e;
+            --modal-bg: #1e1e2e;
+            --input-bg: #2a2a3e;
+            --th-text: #e0e0e0;
+            --btn-text: white;
+            --row-hover: #2a2a3e;
+            --secondary-hover: #3a8eef;
+            --success-hover: #27ae60;
+            --edit-btn-bg: #d35400;
+            --edit-btn-hover: #a04000;
+            --cancel-btn-bg: #555;
+            --cancel-btn-hover: #444;
+        }
+        body.theme-oregon {
+            --bg-color: #f5f2e6;
+            --text-color: #2d2d2d;
+            --primary: #154734;
+            --secondary: #154734;
+            --border: #c8b88a;
+            --success: #154734;
+            --container-bg: #fffdf5;
+            --patient-name-bg: #edf3e8;
+            --total-cell-bg: #dde6cc;
+            --modal-bg: #fffdf5;
+            --input-bg: #fffdf5;
+            --th-text: #FEE123;
+            --btn-text: #FEE123;
+            --row-hover: #edf3e8;
+            --secondary-hover: #0d3320;
+            --success-hover: #0d3320;
+            --edit-btn-bg: #154734;
+            --edit-btn-hover: #0d3320;
+            --cancel-btn-bg: #8a7a5a;
+            --cancel-btn-hover: #6d5f45;
         }
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -23,10 +82,10 @@
         .container {
             max-width: 1200px;
             margin: 0 auto;
-            background: white;
             padding: 20px;
             border-radius: 8px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            background: var(--container-bg);
         }
         header {
             display: flex;
@@ -43,26 +102,33 @@
             border: 1px solid var(--border);
             margin-left: 10px;
         }
+        .controls select {
+            background: var(--input-bg);
+            color: var(--text-color);
+        }
         .controls button {
             background-color: var(--secondary);
-            color: white;
+            color: var(--btn-text);
             border: none;
             cursor: pointer;
             font-weight: bold;
         }
         .controls button:hover {
-            background-color: #2980b9;
+            background-color: var(--secondary-hover);
         }
         .controls button.export-btn {
             background-color: var(--success);
         }
         .controls button.export-btn:hover {
-            background-color: #219a52;
+            background-color: var(--success-hover);
         }
         table {
             width: 100%;
             border-collapse: collapse;
             margin-top: 10px;
+        }
+        tbody tr:hover {
+            background-color: var(--row-hover);
         }
         th, td {
             border: 1px solid var(--border);
@@ -71,22 +137,24 @@
         }
         th {
             background-color: var(--primary);
-            color: white;
+            color: var(--th-text);
         }
         td.patient-name {
             text-align: left;
             font-weight: bold;
-            background-color: #f9f9f9;
+            background-color: var(--patient-name-bg);
         }
         select.time-select {
             width: 100%;
             padding: 5px;
             border-radius: 4px;
             border: 1px solid var(--border);
+            background: var(--input-bg);
+            color: var(--text-color);
         }
         .total-cell {
             font-weight: bold;
-            background-color: #e8f4f8;
+            background-color: var(--total-cell-bg);
         }
         /* Modal overlay */
         .modal-overlay {
@@ -102,7 +170,8 @@
             display: flex;
         }
         .modal-box {
-            background: white;
+            background: var(--modal-bg);
+            color: var(--text-color);
             border-radius: 8px;
             padding: 25px;
             max-width: 650px;
@@ -134,6 +203,8 @@
             font-size: 14px;
             resize: vertical;
             box-sizing: border-box;
+            background: var(--input-bg);
+            color: var(--text-color);
         }
         .modal-actions {
             display: flex;
@@ -151,23 +222,23 @@
         }
         .modal-actions .save-btn {
             background-color: var(--success);
-            color: white;
+            color: var(--btn-text);
         }
         .modal-actions .save-btn:hover {
-            background-color: #219a52;
+            background-color: var(--success-hover);
         }
         .modal-actions .cancel-btn {
-            background-color: #95a5a6;
-            color: white;
+            background-color: var(--cancel-btn-bg);
+            color: var(--btn-text);
         }
         .modal-actions .cancel-btn:hover {
-            background-color: #7f8c8d;
+            background-color: var(--cancel-btn-hover);
         }
         .controls button.edit-btn {
-            background-color: #e67e22;
+            background-color: var(--edit-btn-bg);
         }
         .controls button.edit-btn:hover {
-            background-color: #d35400;
+            background-color: var(--edit-btn-hover);
         }
     </style>
 </head>
@@ -183,6 +254,11 @@
             </select>
             <button class="export-btn" onclick="exportToCSV()">Export to CSV</button>
             <button class="edit-btn" onclick="openEditPatients()">Edit Patients</button>
+            <select id="themeSelect" onchange="setTheme(this.value)">
+                <option value="default">Default</option>
+                <option value="dark">Dark</option>
+                <option value="oregon">Oregon Green</option>
+            </select>
         </div>
     </header>
     <table id="attendanceTable">
@@ -376,6 +452,19 @@
     document.getElementById('editModal').addEventListener('click', function(e) {
         if (e.target === this) closeEditPatients();
     });
+    // Theme switcher
+    function setTheme(theme) {
+        document.body.className = 'theme-' + theme;
+        localStorage.setItem('attendance-theme', theme);
+    }
+    // Load saved theme
+    (function loadSavedTheme() {
+        const saved = localStorage.getItem('attendance-theme');
+        if (saved) {
+            document.body.className = 'theme-' + saved;
+            document.getElementById('themeSelect').value = saved;
+        }
+    })();
     // Run on boot
     initializeState();
     loadUnitData();
